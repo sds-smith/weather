@@ -1,13 +1,57 @@
 <template>
-  <div id="app" :class="typeof weather.main != 'undefined' && weather.main.temp > 50 ? 'warm' : ''">
+  <div id="app" :class="weather.main !== undefined && weather.main.temp > 50 ? 'warm' : ''">
     <main>
+      <h1>Weather App</h1>
       <div class="search-box">
         <input 
           type="text" 
           class="search-bar" 
-          placeholder="Search..."
-          v-model="query"
-          v-on:keypress="fetchWeather"
+          :style="{display : city_display}"
+          :placeholder="city_placeholder"
+          v-model="cityQuery"
+          @focus="citySearch"
+          @keyup.enter="fetchCityWeather"
+        />
+        <div class="city_details" :style="{display : city_details_display}">
+          <select 
+              name="country" 
+              id="country" 
+              class="search-bar" 
+              v-model="country"
+              @keyup.enter="fetchCityWeather"  
+          >
+            <option value="">Select Country</option>
+          </select>
+          <select 
+              name="state" 
+              id="state" 
+              class="search-bar" 
+              v-model="state" 
+              :disabled="country === 'USA' ? false : true"
+              @keyup.enter="fetchCityWeather"    
+          >
+            <option value="">Select State</option>
+          </select>
+        </div>
+
+        <input 
+          type="text" 
+          class="search-bar" 
+          :style="{display : coordinates_display}"
+          :placeholder="coordinates_placeholder"
+          v-model="latitude"
+          @focus="coordinatesSearch"
+          @keyup.enter="focusInput"
+        />
+        <input 
+          type="text" 
+          class="search-bar" 
+          ref="longitude"
+          :style="{display : coordinates_details_display}"
+          placeholder="Enter Longitude"
+          v-model="longitude"
+          @focus="coordinatesSearch"
+          @keyup.enter="fetchCoordinatesWeather"
         />
       </div>
 
@@ -19,7 +63,8 @@
 
         <div class="weather-box">
           <div class="temp">{{ Math.round(weather.main.temp) }}°f</div>
-          <div class="weather">{{ weather.weather[0].main }}</div>
+          <div class="weather">{{ weather.weather[0].description }}</div>
+          <img :src="`http://openweathermap.org/img/wn/${weather.weather[0].icon}@2x.png`"/>
         </div>
       </div>
     </main>
@@ -27,29 +72,86 @@
 </template>
 
 <script>
+import {countryListAlpha3, states} from './assets/geoCodes'
+
 export default {
+
+  mounted() {
+    for (let country in countryListAlpha3) {
+      const option = document.createElement('option')
+      option.innerHTML = countryListAlpha3[country]
+      option.value = country
+      document.getElementById('country').appendChild(option)
+    }
+
+    states.forEach(state => {
+      const option = document.createElement('option')
+      option.innerHTML = state
+      option.value = state
+      document.getElementById('state').appendChild(option)
+    })
+  },
+
   name: 'app',
+
   data () {
     return {
       api_key: '20ffadd488fb7af5565937af674f68ae',
-      url_base: 'https://api.openweathermap.org/data/2.5/',
-      query: '',
+      url_base: 'https://api.openweathermap.org/data/2.5/', 
+      city_placeholder: "Search by City...",
+      city_display: 'block',
+      city_details_display: 'none',
+      coordinates_placeholder: "Search by Coordinates...",
+      coordinates_display: 'block',   
+      coordinates_details_display: 'none',   
+      cityQuery: '',
+      country: '',
+      state: '',
+      latitude: '',
+      longitude: '',
       weather: {}
     }
   },
+
   methods: {
-    fetchWeather (e) {
-      if (e.key == "Enter") {
-        fetch(`${this.url_base}weather?q=${this.query}&units=imperial&APPID=${this.api_key}`)
-          .then(res => {
-            return res.json();
-          }).then(this.setResults);
-      }
+    citySearch() {
+      this.coordinates_display = 'none'
+      this.city_details_display = 'block'
+      this.city_placeholder = "Enter City Name"
     },
-    setResults (results) {
-      this.weather = results;
+
+    focusInput() {
+      this.$refs.longitude.focus();
     },
-    dateBuilder () {
+
+    coordinatesSearch() {
+      this.city_display = 'none'
+      this.coordinates_details_display = 'block'
+      this.coordinates_placeholder = "Enter Latitude"
+    },
+
+    async fetchCityWeather() {
+        let endpoint
+        if (this.country === 'USA') {
+          endpoint = `https://api.openweathermap.org/geo/1.0/direct?q=${this.cityQuery},${this.state},${this.country}&limit=1&appid=${this.api_key}`
+        } else {
+          endpoint = `https://api.openweathermap.org/geo/1.0/direct?q=${this.cityQuery},${this.country}&limit=1&appid=${this.api_key}`
+        }    
+        const response = await fetch(endpoint)
+        const jsonResponse = await response.json()
+        console.log(jsonResponse)
+        this.latitude = jsonResponse[0].lat
+        this.longitude = jsonResponse[0].lon
+        this.fetchCoordinatesWeather()
+    },
+
+    async fetchCoordinatesWeather() {
+      const response = await fetch(`${this.url_base}weather?lat=${this.latitude}&lon=${this.longitude}&units=imperial&appid=${this.api_key}`)
+      this.weather = await response.json()
+      console.log(this.weather)
+    },
+
+    dateBuilder() {
       let d = new Date();
       let months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
       let days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -77,12 +179,17 @@ body {
   transition: 0.4s;
 }
 #app.warm {
-  background-color: orangered;
+  background-color: aqua;
 }
 main {
   min-height: 100vh;
   padding: 25px;
   background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.75));
+}
+h1 {
+  color: white;
+  text-align: center;
+  margin: 20px 0px;
 }
 .search-box {
   width: 100%;
@@ -92,7 +199,7 @@ main {
   display: block;
   width: 100%;
   padding: 15px;
-  
+  margin: 10px 0px;
   color: #313131;
   font-size: 20px;
   appearance: none;
@@ -108,6 +215,17 @@ main {
   box-shadow: 0px 0px 16px rgba(0, 0, 0, 0.25);
   background-color: rgba(255, 255, 255, 0.75);
   border-radius: 16px 0px 16px 0px;
+}
+
+.city_details {
+  width: 100%;
+}
+
+#country,
+#state {
+  width: 40%;
+  display: inline-block;
+  margin: 0px 5%;
 }
 .location-box .location {
   color: #FFF;
