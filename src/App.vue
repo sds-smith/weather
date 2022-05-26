@@ -185,7 +185,8 @@ export default {
       let date = d.getDate();
       let month = months[d.getMonth()];
       let year = d.getFullYear();
-      return `${day} ${month} ${date} ${year}`;
+      let time = d.toLocaleTimeString();
+      return `${day} ${month} ${date} ${year}  ${time}`;
     },
 
     degToCompass(num) {
@@ -310,6 +311,18 @@ p {
 @media screen and (max-width : 1020px) {
   main {
     width: 100%;
+  }
+
+  .location-box .location {
+    font-size: 24px;
+  }
+
+  .weather-box .temp {
+    font-size: 60px;
+  }
+
+  .weather-box .weather {
+    font-size: 24px;
   }
 }
 </style>
