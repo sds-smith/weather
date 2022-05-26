@@ -58,14 +58,22 @@
       <div class="weather-wrap" v-if="weather.main !== undefined">
         <div class="location-box">
           <div class="location">{{ weather.name }} {{state}}, {{ weather.sys.country }}</div>
-
           <div class="date">{{ dateBuilder() }}</div>
         </div>
 
         <div class="weather-box">
           <div class="temp">{{ Math.round(weather.main.temp) }}°f</div>
           <div class="weather">{{ weather.weather[0].description }}</div>
+          <p >{{ weather.clouds.all }}% cloudy</p>
           <img :src="`http://openweathermap.org/img/wn/${weather.weather[0].icon}@2x.png`"/>
+          <div class="more-info">
+            <p >{{ weather.main.humidity }}% humidity</p>
+            <p >{{ weather.visibility }}m visibility</p>
+            <p >{{ weather.wind.speed }}mph wind speed</p>
+            <p >{{ weather.wind.deg }} wind direction</p>
+            <p >{{ weather.sys.sunrise }} sunrise</p>
+            <p >{{ weather.sys.sunset }} sunset</p>
+          </div>
         </div>
       </div>
     </main>
@@ -164,6 +172,7 @@ export default {
     async fetchCoordinatesWeather() {
       const response = await fetch(`${this.url_base}weather?lat=${this.latitude}&lon=${this.longitude}&units=imperial&appid=${this.api_key}`)
       this.weather = await response.json()
+      console.log(this.weather)
       this.resetInputs()
     },
 
@@ -283,5 +292,15 @@ h1 {
   font-weight: 700;
   font-style: italic;
   text-shadow: 3px 6px rgba(0, 0, 0, 0.25);
+}
+
+p {
+  color: white;
+  font-size: 1rem;
+}
+@media screen and (max-width : 1020px) {
+  main {
+    width: 100%;
+  }
 }
 </style>
