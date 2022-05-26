@@ -28,7 +28,7 @@
               class="search-bar" 
               v-model="state" 
               :disabled="country === 'USA' ? false : true"
-              @keyup.enter="fetchCityWeather"    
+              @change="fetchCityWeather"    
           >
             <option value="">Select State</option>
           </select>
@@ -57,7 +57,7 @@
 
       <div class="weather-wrap" v-if="weather.main !== undefined">
         <div class="location-box">
-          <div class="location">{{ weather.name }} {{state}}, {{ weather.sys.country }}</div>
+          <div class="location">{{ weather.name }} {{geoLocation.state}}, {{ weather.sys.country }}</div>
           <div class="date">{{ dateBuilder() }}</div>
         </div>
 
@@ -65,14 +65,13 @@
           <div class="temp">{{ Math.round(weather.main.temp) }}°f</div>
           <div class="weather">{{ weather.weather[0].description }}</div>
           <p >{{ weather.clouds.all }}% cloudy</p>
-          <img :src="`http://openweathermap.org/img/wn/${weather.weather[0].icon}@2x.png`"/>
+          <img :src="`https://openweathermap.org/img/wn/${weather.weather[0].icon}@2x.png`"/>
           <div class="more-info">
-            <p >{{ weather.main.humidity }}% humidity</p>
-            <p >{{ weather.visibility }}m visibility</p>
-            <p >{{ weather.wind.speed }}mph wind speed</p>
-            <p >{{ weather.wind.deg }} wind direction</p>
-            <p >{{ weather.sys.sunrise }} sunrise</p>
-            <p >{{ weather.sys.sunset }} sunset</p>
+            <p >Humidity: {{ weather.main.humidity }}%</p>
+            <p >Visibility: {{ weather.visibility }}m</p>
+            <p >Wind: {{ weather.wind.speed }}mph {{ degToCompass(weather.wind.deg) }}</p>
+            <p >Sunrise: {{ new Date(weather.sys.sunrise * 1000).toLocaleTimeString() }}</p>
+            <p >Sunset: {{ new Date(weather.sys.sunset * 1000).toLocaleTimeString() }}</p>
           </div>
         </div>
       </div>
@@ -118,6 +117,7 @@ export default {
       state: '',
       latitude: '',
       longitude: '',
+      geoLocation: {},
       weather: {}
     }
   },
@@ -164,6 +164,7 @@ export default {
         const response = await fetch(endpoint)
         const jsonResponse = await response.json()
         console.log(jsonResponse)
+        this.geoLocation = jsonResponse[0]
         this.latitude = jsonResponse[0].lat
         this.longitude = jsonResponse[0].lon
         this.fetchCoordinatesWeather()
@@ -185,6 +186,12 @@ export default {
       let month = months[d.getMonth()];
       let year = d.getFullYear();
       return `${day} ${month} ${date} ${year}`;
+    },
+
+    degToCompass(num) {
+        const val = Math.floor((num / 22.5) + 0.5);
+        const compassArr = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+        return compassArr[(val % 16)];
     }
   }
 }
@@ -297,6 +304,8 @@ h1 {
 p {
   color: white;
   font-size: 1rem;
+  font-weight: bold;
+  margin: 5px 0px
 }
 @media screen and (max-width : 1020px) {
   main {
