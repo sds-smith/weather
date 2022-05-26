@@ -57,7 +57,8 @@
 
       <div class="weather-wrap" v-if="weather.main !== undefined">
         <div class="location-box">
-          <div class="location">{{ weather.name }}, {{ weather.sys.country }}</div>
+          <div class="location">{{ weather.name }} {{state}}, {{ weather.sys.country }}</div>
+
           <div class="date">{{ dateBuilder() }}</div>
         </div>
 
@@ -124,6 +125,21 @@ export default {
       this.$refs.longitude.focus();
     },
 
+    resetInputs() {
+      this.city_placeholder = "Search by City...",
+      this.city_display = 'block',
+      this.city_details_display = 'none',
+      this.coordinates_placeholder = "Search by Coordinates...",
+      this.coordinates_display = 'block',   
+      this.coordinates_details_display = 'none',
+      this.cityQuery = '',
+      this.country = '',
+      this.state = '',
+      this.latitude = '',
+      this.longitude = '',
+      document.activeElement.blur()
+    },
+
     coordinatesSearch() {
       this.city_display = 'none'
       this.coordinates_details_display = 'block'
@@ -148,7 +164,7 @@ export default {
     async fetchCoordinatesWeather() {
       const response = await fetch(`${this.url_base}weather?lat=${this.latitude}&lon=${this.longitude}&units=imperial&appid=${this.api_key}`)
       this.weather = await response.json()
-      console.log(this.weather)
+      this.resetInputs()
     },
 
     dateBuilder() {
@@ -172,10 +188,13 @@ export default {
   box-sizing: border-box;
 }
 body {
-  font-family: 'montserrat', sans-serif;
+  font-family: 'trebuchet', sans-serif;
 }
+
 #app {
+
   background-color: aquamarine;
+  background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.65));
   transition: 0.4s;
 }
 #app.warm {
@@ -183,8 +202,10 @@ body {
 }
 main {
   min-height: 100vh;
+  width: 50%;
+  margin: 0 auto;
   padding: 25px;
-  background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.75));
+  background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.45));
 }
 h1 {
   color: white;
@@ -214,7 +235,7 @@ h1 {
 .search-box .search-bar:focus {
   box-shadow: 0px 0px 16px rgba(0, 0, 0, 0.25);
   background-color: rgba(255, 255, 255, 0.75);
-  border-radius: 16px 0px 16px 0px;
+  border-radius: 16px 16px 16px 16px;
 }
 
 .city_details {
